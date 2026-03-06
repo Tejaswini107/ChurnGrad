@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ChurnGrad — Customer Churn Prediction</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --navy: #0a1628;
+    --navy-mid: #112240;
+    --navy-light: #1d3461;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --cream: #f5f0e8;
+    --cream-dark: #ede5d4;
+    --white: #ffffff;
+    --red: #c0392b;
+    --green: #1a6b3c;
+    --text-muted: #8a9bb5;
+    --border: rgba(201,168,76,0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(201,168,76,0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(29,52,97,0.8) 0%, transparent 50%),
+      repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(201,168,76,0.02) 40px, rgba(201,168,76,0.02) 41px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.7s ease both;
+  }
+
+  .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(201,168,76,0.1);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 8px 20px;
+    margin-bottom: 24px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  .logo-badge::before {
+    content: '◆';
+    font-size: 8px;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    color: var(--white);
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+
+  h1 span {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 15px;
+    font-weight: 300;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 40px 0 32px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .divider span {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  /* Form Card */
+  .card {
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    animation: fadeUp 0.7s ease 0.2s both;
+  }
+
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--gold);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  input, select {
+    background: var(--navy);
+    border: 1px solid rgba(138,155,181,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    width: 100%;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+  }
+
+  select option { background: var(--navy-mid); }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+    background: var(--navy);
+    border-radius: 10px;
+    padding: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .tab.active {
+    background: var(--navy-light);
+    color: var(--gold);
+    border: 1px solid var(--border);
+  }
+
+  /* Button */
+  .btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border: none;
+    border-radius: 10px;
+    color: var(--navy);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    margin-top: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(201,168,76,0.3);
+  }
+
+  .btn:active { transform: translateY(0); }
+
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-text { transition: opacity 0.2s; }
+  .btn.loading .btn-text { opacity: 0; }
+
+  .spinner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn.loading .spinner { opacity: 1; }
+
+  .spinner::after {
+    content: '';
+    width: 20px; height: 20px;
+    border: 2px solid var(--navy);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  /* Result */
+  .result {
+    margin-top: 28px;
+    border-radius: 12px;
+    overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+    display: none;
+  }
+
+  .result.visible { display: block; }
+
+  .result-header {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .result.churn .result-header { background: rgba(192,57,43,0.15); border: 1px solid rgba(192,57,43,0.3); border-bottom: none; }
+  .result.no-churn .result-header { background: rgba(26,107,60,0.15); border: 1px solid rgba(26,107,60,0.3); border-bottom: none; }
+
+  .result-icon {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .result.churn .result-icon { background: rgba(192,57,43,0.2); }
+  .result.no-churn .result-icon { background: rgba(26,107,60,0.2); }
+
+  .result-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem;
+    color: var(--white);
+  }
+
+  .result-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .result-probability {
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .prob-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  .result.churn .prob-value { color: #e74c3c; }
+  .result.no-churn .prob-value { color: #2ecc71; }
+
+  .prob-label {
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* Progress bar */
+  .prob-bar-wrap {
+    padding: 16px 24px;
+    background: var(--navy-mid);
+    border-left: 1px solid;
+    border-right: 1px solid;
+  }
+
+  .result.churn .prob-bar-wrap { border-color: rgba(192,57,43,0.3); }
+  .result.no-churn .prob-bar-wrap { border-color: rgba(26,107,60,0.3); }
+
+  .prob-bar-bg {
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .prob-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 0%;
+  }
+
+  .result.churn .prob-bar-fill { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+  .result.no-churn .prob-bar-fill { background: linear-gradient(90deg, #1a6b3c, #2ecc71); }
+
+  /* SHAP explanations */
+  .shap-body {
+    padding: 20px 24px;
+    background: var(--navy-mid);
+    border: 1px solid;
+    border-top: none;
+  }
+
+  .result.churn .shap-body { border-color: rgba(192,57,43,0.3); border-radius: 0 0 12px 12px; }
+  .result.no-churn .shap-body { border-color: rgba(26,107,60,0.3); border-radius: 0 0 12px 12px; }
+
+  .shap-title {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+
+  .shap-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .shap-name {
+    width: 160px;
+    font-size: 12px;
+    color: var(--cream-dark);
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .shap-bar-bg {
+    flex: 1;
+    height: 5px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .shap-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.8s ease;
+  }
+
+  .shap-positive { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+  .shap-negative { background: linear-gradient(90deg, #1a6b3c, #2ecc71); }
+
+  .shap-val {
+    width: 55px;
+    text-align: right;
+    font-size: 12px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .shap-positive-val { color: #e74c3c; }
+  .shap-negative-val { color: #2ecc71; }
+
+  /* Error */
+  .error-msg {
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: rgba(192,57,43,0.1);
+    border: 1px solid rgba(192,57,43,0.3);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #e74c3c;
+    display: none;
+  }
+
+  .error-msg.visible { display: block; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 12px;
+    color: var(--text-muted);
+    animation: fadeUp 0.7s ease 0.4s both;
+  }
+
+  footer a { color: var(--gold); text-decoration: none; }
+
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 600px) {
+    .card { padding: 24px 18px; }
+    .grid { grid-template-columns: 1fr 1fr; }
+    .result-probability { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo-badge">ChurnGrad Analytics</div>
+    <h1>Customer Churn<br/><span>Risk Assessment</span></h1>
+    <p class="subtitle">Enter customer details to predict churn probability and understand the key driving factors.</p>
+  </header>
+
+  <div class="card">
+    <!-- Mode Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="setMode('predict')">Predict Only</button>
+      <button class="tab" onclick="setMode('explain')">Predict + Explain</button>
+    </div>
+
+    <!-- Personal Info -->
+    <div class="section-title">Personal Information</div>
+    <div class="grid">
+      <div class="field">
+        <label>Gender</label>
+        <select id="gender">
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Senior Citizen</label>
+        <select id="SeniorCitizen">
+          <option value="0">No</option>
+          <option value="1">Yes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Partner</label>
+        <select id="Partner">
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Dependents</label>
+        <select id="Dependents">
+          <option>No</option>
+          <option>Yes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tenure (months)</label>
+        <input type="number" id="tenure" value="12" min="0" max="72"/>
+      </div>
+    </div>
+
+    <!-- Services -->
+    <div class="section-title">Services</div>
+    <div class="grid">
+      <div class="field">
+        <label>Phone Service</label>
+        <select id="PhoneService">
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Multiple Lines</label>
+        <select id="MultipleLines">
+          <option>No</option>
+          <option>Yes</option>
+          <option value="No phone service">No phone service</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Internet Service</label>
+        <select id="InternetService">
+          <option>Fiber optic</option>
+          <option>DSL</option>
+          <option>No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Online Security</label>
+        <select id="OnlineSecurity">
+          <option>No</option>
+          <option>Yes</option>
+          <option value="No internet service">No internet service</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Online Backup</label>
+        <select id="OnlineBackup">
+          <option>Yes</option>
+          <option>No</option>
+          <option value="No internet service">No internet service</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Device Protection</label>
+        <select id="DeviceProtection">
+          <option>No</option>
+          <option>Yes</option>
+          <option value="No internet service">No internet service</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tech Support</label>
+        <select id="TechSupport">
+          <option>No</option>
+          <option>Yes</option>
+          <option value="No internet service">No internet service</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Streaming TV</label>
+        <select id="StreamingTV">
+          <option>No</option>
+          <option>Yes</option>
+          <option value="No internet service">No internet service</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Streaming Movies</label>
+        <select id="StreamingMovies">
+          <option>No</option>
+          <option>Yes</option>
+          <option value="No internet service">No internet service</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Billing -->
+    <div class="section-title">Billing & Contract</div>
+    <div class="grid">
+      <div class="field">
+        <label>Contract</label>
+        <select id="Contract">
+          <option>Month-to-month</option>
+          <option>One year</option>
+          <option>Two year</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Paperless Billing</label>
+        <select id="PaperlessBilling">
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Payment Method</label>
+        <select id="PaymentMethod">
+          <option>Electronic check</option>
+          <option>Mailed check</option>
+          <option>Bank transfer (automatic)</option>
+          <option>Credit card (automatic)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Monthly Charges ($)</label>
+        <input type="number" id="MonthlyCharges" value="70.35" step="0.01" min="0"/>
+      </div>
+      <div class="field">
+        <label>Total Charges ($)</label>
+        <input type="number" id="TotalCharges" value="844.20" step="0.01" min="0"/>
+      </div>
+    </div>
+
+    <button class="btn" id="submitBtn" onclick="submit()">
+      <span class="btn-text">Analyse Customer Risk</span>
+      <span class="spinner"></span>
+    </button>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <!-- Result -->
+    <div class="result" id="result">
+      <div class="result-header">
+        <div class="result-icon" id="resultIcon"></div>
+        <div>
+          <div class="result-title" id="resultTitle"></div>
+          <div class="result-subtitle" id="resultSubtitle"></div>
+        </div>
+        <div class="result-probability">
+          <div class="prob-value" id="probValue"></div>
+          <div class="prob-label">Churn Risk</div>
+        </div>
+      </div>
+      <div class="prob-bar-wrap">
+        <div class="prob-bar-bg">
+          <div class="prob-bar-fill" id="probBar"></div>
+        </div>
+      </div>
+      <div class="shap-body" id="shapBody" style="display:none;">
+        <div class="shap-title">Key Influencing Factors</div>
+        <div id="shapItems"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    Powered by <a href="/docs" target="_blank">ChurnGrad API</a> &nbsp;·&nbsp; XGBoost + SHAP
+  </footer>
+
+</div>
+
+<script>
+  let mode = 'predict';
+
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && m === 'predict') || (i === 1 && m === 'explain'));
+    });
+  }
+
+  function getPayload() {
+    return {
+      gender: document.getElementById('gender').value,
+      SeniorCitizen: document.getElementById('SeniorCitizen').value,
+      Partner: document.getElementById('Partner').value,
+      Dependents: document.getElementById('Dependents').value,
+      tenure: parseFloat(document.getElementById('tenure').value),
+      PhoneService: document.getElementById('PhoneService').value,
+      MultipleLines: document.getElementById('MultipleLines').value,
+      InternetService: document.getElementById('InternetService').value,
+      OnlineSecurity: document.getElementById('OnlineSecurity').value,
+      OnlineBackup: document.getElementById('OnlineBackup').value,
+      DeviceProtection: document.getElementById('DeviceProtection').value,
+      TechSupport: document.getElementById('TechSupport').value,
+      StreamingTV: document.getElementById('StreamingTV').value,
+      StreamingMovies: document.getElementById('StreamingMovies').value,
+      Contract: document.getElementById('Contract').value,
+      PaperlessBilling: document.getElementById('PaperlessBilling').value,
+      PaymentMethod: document.getElementById('PaymentMethod').value,
+      MonthlyCharges: parseFloat(document.getElementById('MonthlyCharges').value),
+      TotalCharges: parseFloat(document.getElementById('TotalCharges').value)
+    };
+  }
+
+  async function submit() {
+    const btn = document.getElementById('submitBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const result = document.getElementById('result');
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+    errorMsg.classList.remove('visible');
+    result.classList.remove('visible');
+
+    const endpoint = mode === 'explain' ? '/explain' : '/predict';
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(getPayload())
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Request failed');
+      }
+
+      const data = await res.json();
+      showResult(data);
+
+    } catch (e) {
+      errorMsg.textContent = '⚠ ' + e.message;
+      errorMsg.classList.add('visible');
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  function showResult(data) {
+    const isChurn = data.prediction;
+    const prob = data.churn_probability;
+    const result = document.getElementById('result');
+
+    result.className = 'result visible ' + (isChurn ? 'churn' : 'no-churn');
+
+    document.getElementById('resultIcon').textContent = isChurn ? '⚠' : '✓';
+    document.getElementById('resultTitle').textContent = isChurn ? 'High Churn Risk' : 'Low Churn Risk';
+    document.getElementById('resultSubtitle').textContent = data.message;
+    document.getElementById('probValue').textContent = (prob * 100).toFixed(1) + '%';
+
+    setTimeout(() => {
+      document.getElementById('probBar').style.width = (prob * 100) + '%';
+    }, 100);
+
+    // SHAP
+    const shapBody = document.getElementById('shapBody');
+    if (data.feature_importances) {
+      shapBody.style.display = 'block';
+      const items = Object.entries(data.feature_importances).slice(0, 8);
+      const maxVal = Math.max(...items.map(([,v]) => Math.abs(v)));
+      document.getElementById('shapItems').innerHTML = items.map(([name, val]) => {
+        const pct = (Math.abs(val) / maxVal * 100).toFixed(1);
+        const isPos = val > 0;
+        return `
+          <div class="shap-item">
+            <div class="shap-name">${name}</div>
+            <div class="shap-bar-bg">
+              <div class="shap-bar-fill ${isPos ? 'shap-positive' : 'shap-negative'}" style="width:${pct}%"></div>
+            </div>
+            <div class="shap-val ${isPos ? 'shap-positive-val' : 'shap-negative-val'}">${val > 0 ? '+' : ''}${val.toFixed(3)}</div>
+          </div>`;
+      }).join('');
+    } else {
+      shapBody.style.display = 'none';
+    }
+
+    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+</script>
+</body>
+</html>

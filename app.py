@@ -1,17 +1,18 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
 
 from schemas import CustomerFeatures, PredictionResponse, ExplanationResponse
 from model import churn_model
 
-# Initialize FastAPI app
 app = FastAPI(
-    title="ChurnGuard API",
+    title="ChurnGrad API",
     description="Customer churn prediction API powered by XGBoost and SHAP.",
     version="1.0.0"
 )
 
-# CORS middleware — allows requests from any origin (useful for Hugging Face Spaces)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,11 +20,20 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+# Serve static files (the UI)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    """Serve the frontend UI."""
+    return FileResponse("static/index.html")
+
 
 @app.get("/health", tags=["Health"])
 def health_check():
     """Check if the API is running."""
-    return {"status": "ok", "message": "ChurnGuard API is up and running."}
+    return {"status": "ok", "message": "ChurnGrad API is up and running."}
 
 
 @app.post("/predict", response_model=PredictionResponse, tags=["Prediction"])
@@ -52,5 +62,3 @@ def explain(customer: CustomerFeatures):
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Explanation failed: {str(e)}")
-
-
