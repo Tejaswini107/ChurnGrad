@@ -2,7 +2,7 @@
 title: ChurnGrad
 emoji: 🛡️
 colorFrom: blue
-colorTo: cyan
+colorTo: blue
 sdk: docker
 app_file: app.py
 pinned: false
