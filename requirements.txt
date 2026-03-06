@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+xgboost==1.7.6
+shap
+scikit-learn
+numpy
+pandas
