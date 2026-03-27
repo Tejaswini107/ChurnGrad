@@ -1,13 +1,3 @@
----
-title: ChurnGrad
-emoji: 🛡️
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_file: app.py
-pinned: false
----
-
 # 🛡️ ChurnGrad — Customer Churn Prediction
 
 ChurnGrad is a machine learning-powered web application that predicts whether a telecom customer is likely to churn (leave the service), and explains the key factors driving that prediction.
