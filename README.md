@@ -49,7 +49,3 @@ churngrad/
 ├── requirements.txt
 └── Dockerfile
 ```
-```
-
-
-
